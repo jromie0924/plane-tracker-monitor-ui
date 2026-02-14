@@ -88,21 +88,19 @@ export const FlightRow: React.FC<FlightRowProps> = ({
         </Text>
       </View>
 
-      {/* Additional Info (Altitude/Speed) - Optional */}
-      {(flight.altitude || flight.speed) && (
-        <View style={styles.columnExtra}>
-          {flight.altitude && (
-            <Text style={[styles.textSmall, { color: theme.textSecondary }]}>
-              {Math.round(flight.altitude).toLocaleString()}ft
-            </Text>
-          )}
-          {flight.speed && (
-            <Text style={[styles.textSmall, { color: theme.textSecondary }]}>
-              {Math.round(flight.speed)}kts
-            </Text>
-          )}
-        </View>
-      )}
+      {/* Additional Info (Altitude/Speed) - Always render to maintain alignment */}
+      <View style={styles.columnExtra}>
+        {flight.altitude && (
+          <Text style={[styles.textSmall, { color: theme.textSecondary }]}>
+            {Math.round(flight.altitude).toLocaleString()}ft
+          </Text>
+        )}
+        {flight.speed && (
+          <Text style={[styles.textSmall, { color: theme.textSecondary }]}>
+            {Math.round(flight.speed)}kts
+          </Text>
+        )}
+      </View>
     </View>
   );
 
