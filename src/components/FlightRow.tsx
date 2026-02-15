@@ -39,8 +39,6 @@ export const FlightRow: React.FC<FlightRowProps> = ({
     const column = columns.find(col => col.id === columnId);
     return column?.visible ?? false;
   };
-
-  const location = viewMode === 'arrivals' ? flight.origin : flight.destination;
   
   const rowStyle = [
     styles.row,
@@ -81,12 +79,20 @@ export const FlightRow: React.FC<FlightRowProps> = ({
         </View>
       )}
 
-      {/* Location Column - Show if either from or to is visible */}
-      {/* Note: This column displays origin (arrivals) or destination (departures) based on view mode */}
-      {(isColumnVisible('from') || isColumnVisible('to')) && (
+      {/* From Column */}
+      {isColumnVisible('from') && (
         <View style={styles.columnLocation}>
           <Text style={[styles.text, { color: theme.text }]}>
-            {location}
+            {flight.origin}
+          </Text>
+        </View>
+      )}
+
+      {/* To Column */}
+      {isColumnVisible('to') && (
+        <View style={styles.columnLocation}>
+          <Text style={[styles.text, { color: theme.text }]}>
+            {flight.destination}
           </Text>
         </View>
       )}

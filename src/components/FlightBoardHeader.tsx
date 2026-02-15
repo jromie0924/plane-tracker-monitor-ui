@@ -1,21 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Theme } from '../theme/themes';
 import { ColumnConfig } from '../types/ColumnConfig';
 import { ColumnSelector } from './ColumnSelector';
 
 interface FlightBoardHeaderProps {
   theme: Theme;
-  viewMode: 'arrivals' | 'departures';
-  onToggleView: () => void;
   columns: ColumnConfig[];
   onColumnsChange: (columns: ColumnConfig[]) => void;
 }
 
 export const FlightBoardHeader: React.FC<FlightBoardHeaderProps> = ({
   theme,
-  viewMode,
-  onToggleView,
   columns,
   onColumnsChange,
 }) => {
@@ -27,17 +23,9 @@ export const FlightBoardHeader: React.FC<FlightBoardHeaderProps> = ({
   return (
     <View style={[styles.container, { backgroundColor: theme.headerBackground }]}>
       <View style={styles.titleContainer}>
-        <TouchableOpacity 
-          onPress={onToggleView}
-          style={styles.titleButton}
-        >
-          <Text style={[styles.title, { color: theme.text }]}>
-            {viewMode === 'arrivals' ? '✈ ARRIVALS' : '✈ DEPARTURES'}
-          </Text>
-          <Text style={[styles.toggleHint, { color: theme.textSecondary }]}>
-            (tap to switch)
-          </Text>
-        </TouchableOpacity>
+        <Text style={[styles.title, { color: theme.text }]}>
+          ✈ FLIGHT MONITOR
+        </Text>
         <View style={styles.rightControls}>
           <ColumnSelector
             theme={theme}
@@ -73,11 +61,14 @@ export const FlightBoardHeader: React.FC<FlightBoardHeaderProps> = ({
             <Text style={[styles.headerText, { color: theme.text }]}>Flight</Text>
           </View>
         )}
-        {(isColumnVisible('from') || isColumnVisible('to')) && (
+        {isColumnVisible('from') && (
           <View style={styles.columnLocation}>
-            <Text style={[styles.headerText, { color: theme.text }]}>
-              {viewMode === 'arrivals' ? 'From' : 'To'}
-            </Text>
+            <Text style={[styles.headerText, { color: theme.text }]}>From</Text>
+          </View>
+        )}
+        {isColumnVisible('to') && (
+          <View style={styles.columnLocation}>
+            <Text style={[styles.headerText, { color: theme.text }]}>To</Text>
           </View>
         )}
         {isColumnVisible('altitude') && (
@@ -107,17 +98,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  titleButton: {
-    flexDirection: 'column',
-  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     letterSpacing: 2,
-  },
-  toggleHint: {
-    fontSize: 12,
-    marginTop: 4,
   },
   rightControls: {
     flexDirection: 'row',

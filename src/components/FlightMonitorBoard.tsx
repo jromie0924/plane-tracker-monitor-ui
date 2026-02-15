@@ -18,19 +18,16 @@ import { columnPreferencesService } from '../services/ColumnPreferencesService';
 
 interface FlightMonitorBoardProps {
   theme: Theme;
-  initialViewMode?: ViewMode;
   updateInterval?: number;
   animationsEnabled?: boolean;
 }
 
 export const FlightMonitorBoard: React.FC<FlightMonitorBoardProps> = ({
   theme,
-  initialViewMode = 'arrivals',
   updateInterval = defaultConfig.updateInterval,
   animationsEnabled = defaultConfig.animationsEnabled,
 }) => {
   const [flights, setFlights] = useState<Flight[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [columns, setColumns] = useState<ColumnConfig[]>(() => 
     columnPreferencesService.loadColumns()
   );
@@ -81,10 +78,6 @@ export const FlightMonitorBoard: React.FC<FlightMonitorBoardProps> = ({
     return () => clearInterval(interval);
   }, [updateInterval]);
 
-  const toggleViewMode = () => {
-    setViewMode(prev => prev === 'arrivals' ? 'departures' : 'arrivals');
-  };
-
   const handleColumnsChange = (newColumns: ColumnConfig[]) => {
     setColumns(newColumns);
     columnPreferencesService.saveColumns(newColumns);
@@ -97,7 +90,7 @@ export const FlightMonitorBoard: React.FC<FlightMonitorBoardProps> = ({
       <FlightRow
         flight={item}
         theme={theme}
-        viewMode={viewMode}
+        viewMode="arrivals"
         isEven={index % 2 === 0}
         fadeAnim={fadeAnim}
         columns={columns}
@@ -109,8 +102,6 @@ export const FlightMonitorBoard: React.FC<FlightMonitorBoardProps> = ({
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlightBoardHeader
         theme={theme}
-        viewMode={viewMode}
-        onToggleView={toggleViewMode}
         columns={columns}
         onColumnsChange={handleColumnsChange}
       />

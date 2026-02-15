@@ -28,7 +28,6 @@ export default function App() {
       
       <FlightMonitorBoard
         theme={currentTheme}
-        initialViewMode="arrivals"
         updateInterval={30000}
         animationsEnabled={true}
       />
