@@ -16,11 +16,31 @@ export const columnPreferencesService = {
         return DEFAULT_COLUMNS;
       }
 
-      const savedColumns = JSON.parse(cookieValue) as ColumnConfig[];
+      const savedColumns = JSON.parse(cookieValue);
       
-      // Validate and merge with defaults to handle new columns
+      // Validate the parsed data
+      if (!Array.isArray(savedColumns)) {
+        console.warn('Invalid column data in cookie: not an array');
+        return DEFAULT_COLUMNS;
+      }
+
+      // Validate each column has required properties
+      const isValid = savedColumns.every(col => 
+        col && 
+        typeof col === 'object' && 
+        typeof col.id === 'string' && 
+        typeof col.label === 'string' && 
+        typeof col.visible === 'boolean'
+      );
+
+      if (!isValid) {
+        console.warn('Invalid column data in cookie: missing required properties');
+        return DEFAULT_COLUMNS;
+      }
+      
+      // Merge with defaults to handle new columns
       return DEFAULT_COLUMNS.map(defaultCol => {
-        const savedCol = savedColumns.find(col => col.id === defaultCol.id);
+        const savedCol = savedColumns.find((col: ColumnConfig) => col.id === defaultCol.id);
         return savedCol || defaultCol;
       });
     } catch (error) {

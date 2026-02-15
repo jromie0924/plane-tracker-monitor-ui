@@ -82,6 +82,7 @@ export const FlightRow: React.FC<FlightRowProps> = ({
       )}
 
       {/* Location Column - Show if either from or to is visible */}
+      {/* Note: This column displays origin (arrivals) or destination (departures) based on view mode */}
       {(isColumnVisible('from') || isColumnVisible('to')) && (
         <View style={styles.columnLocation}>
           <Text style={[styles.text, { color: theme.text }]}>

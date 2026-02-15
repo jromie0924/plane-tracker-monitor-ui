@@ -44,7 +44,7 @@ export const FlightBoardHeader: React.FC<FlightBoardHeaderProps> = ({
             columns={columns}
             onColumnsChange={onColumnsChange}
           />
-          <Text style={[styles.timestamp, { color: theme.textSecondary }]}>
+          <Text style={[styles.timestamp, { color: theme.textSecondary, marginLeft: 12 }]}>
             {new Date().toLocaleString('en-US', {
               year: 'numeric',
               month: '2-digit',
@@ -122,7 +122,6 @@ const styles = StyleSheet.create({
   rightControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
   },
   timestamp: {
     fontSize: 18,
