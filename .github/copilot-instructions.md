@@ -56,7 +56,7 @@ This is a React Native + Expo application that provides an airport-style flight 
 ### User Configuration (`src/config/appConfig.ts`)
 Key configuration values that can be customized:
 - `updateInterval`: Flight data update frequency in milliseconds (default: 30000 = 30 seconds)
-- `defaultViewMode`: Initial display mode - 'arrivals' or 'deparths'
+- `defaultViewMode`: Initial display mode - 'arrivals' or 'departures'
 - `animationsEnabled`: Enable/disable fade-in animations for flight rows
 - `soundAlertsEnabled`: Sound alerts for flight changes (not yet implemented)
 - `maxFlightsDisplayed`: Maximum number of flights to show (default: 20)
