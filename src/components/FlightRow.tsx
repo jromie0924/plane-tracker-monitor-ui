@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Flight, FlightStatus } from '../types/Flight';
 import { Theme } from '../theme/themes';
+import { ColumnConfig } from '../types/ColumnConfig';
 
 interface FlightRowProps {
   flight: Flight;
@@ -9,6 +10,7 @@ interface FlightRowProps {
   viewMode: 'arrivals' | 'departures';
   isEven: boolean;
   fadeAnim?: Animated.Value;
+  columns: ColumnConfig[];
 }
 
 export const FlightRow: React.FC<FlightRowProps> = ({ 
@@ -16,7 +18,8 @@ export const FlightRow: React.FC<FlightRowProps> = ({
   theme, 
   viewMode, 
   isEven,
-  fadeAnim 
+  fadeAnim,
+  columns,
 }) => {
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
@@ -32,7 +35,10 @@ export const FlightRow: React.FC<FlightRowProps> = ({
     return theme.statusColors[statusKey] || theme.statusColors.scheduled;
   };
 
-  const location = viewMode === 'arrivals' ? flight.origin : flight.destination;
+  const isColumnVisible = (columnId: string) => {
+    const column = columns.find(col => col.id === columnId);
+    return column?.visible ?? false;
+  };
   
   const rowStyle = [
     styles.row,
@@ -45,62 +51,73 @@ export const FlightRow: React.FC<FlightRowProps> = ({
   const content = (
     <View style={rowStyle}>
       {/* Time Column */}
-      <View style={styles.columnTime}>
-        <Text style={[styles.text, styles.textBold, { color: theme.text }]}>
-          {formatTime(flight.scheduledTime)}
-        </Text>
-      </View>
-
-      {/* Airline Logo/Code Column */}
-      <View style={styles.columnAirline}>
-        <View style={[styles.airlineBadge, { borderColor: theme.primary }]}>
-          <Text style={[styles.airlineText, { color: theme.text }]}>
-            {flight.airlineCode}
+      {isColumnVisible('time') && (
+        <View style={styles.columnTime}>
+          <Text style={[styles.text, styles.textBold, { color: theme.text }]}>
+            {formatTime(flight.scheduledTime)}
           </Text>
         </View>
-      </View>
+      )}
+
+      {/* Airline Logo/Code Column */}
+      {isColumnVisible('airline') && (
+        <View style={styles.columnAirline}>
+          <View style={[styles.airlineBadge, { borderColor: theme.primary }]}>
+            <Text style={[styles.airlineText, { color: theme.text }]}>
+              {flight.airlineCode}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Flight Number Column */}
-      <View style={styles.columnFlight}>
-        <Text style={[styles.text, styles.textBold, { color: theme.text }]}>
-          {flight.flightNumber}
-        </Text>
-      </View>
-
-      {/* Location Column */}
-      <View style={styles.columnLocation}>
-        <Text style={[styles.text, { color: theme.text }]}>
-          {location}
-        </Text>
-      </View>
-
-      {/* Status Column */}
-      <View style={styles.columnStatus}>
-        <Text style={[styles.text, { color: getStatusColor(flight.status) }]}>
-          {flight.status}
-        </Text>
-      </View>
-
-      {/* Estimated Time Column */}
-      <View style={styles.columnEstimated}>
-        <Text style={[styles.text, { color: theme.textSecondary }]}>
-          {formatTime(flight.estimatedTime)}
-        </Text>
-      </View>
-
-      {/* Additional Info (Altitude/Speed) - Always render to maintain alignment */}
-      <View style={styles.columnExtra}>
-        {flight.altitude && (
-          <Text style={[styles.textSmall, { color: theme.textSecondary }]}>
-            {Math.round(flight.altitude).toLocaleString()}ft
+      {isColumnVisible('flight') && (
+        <View style={styles.columnFlight}>
+          <Text style={[styles.text, styles.textBold, { color: theme.text }]}>
+            {flight.flightNumber}
           </Text>
-        )}
-        {flight.speed && (
-          <Text style={[styles.textSmall, { color: theme.textSecondary }]}>
-            {Math.round(flight.speed)}kts
+        </View>
+      )}
+
+      {/* From Column */}
+      {isColumnVisible('from') && (
+        <View style={styles.columnLocation}>
+          <Text style={[styles.text, { color: theme.text }]}>
+            {flight.origin}
           </Text>
-        )}
-      </View>
+        </View>
+      )}
+
+      {/* To Column */}
+      {isColumnVisible('to') && (
+        <View style={styles.columnLocation}>
+          <Text style={[styles.text, { color: theme.text }]}>
+            {flight.destination}
+          </Text>
+        </View>
+      )}
+
+      {/* Altitude Column */}
+      {isColumnVisible('altitude') && (
+        <View style={styles.columnAltitude}>
+          {flight.altitude && (
+            <Text style={[styles.text, { color: theme.textSecondary }]}>
+              {Math.round(flight.altitude).toLocaleString()}ft
+            </Text>
+          )}
+        </View>
+      )}
+
+      {/* Airplane Type Column */}
+      {isColumnVisible('airplaneType') && (
+        <View style={styles.columnAircraft}>
+          {flight.aircraft && (
+            <Text style={[styles.text, { color: theme.text }]}>
+              {flight.aircraft}
+            </Text>
+          )}
+        </View>
+      )}
     </View>
   );
 
@@ -152,6 +169,14 @@ const styles = StyleSheet.create({
   },
   columnExtra: {
     flex: 1.2,
+    paddingHorizontal: 4,
+  },
+  columnAltitude: {
+    flex: 1.2,
+    paddingHorizontal: 4,
+  },
+  columnAircraft: {
+    flex: 1.5,
     paddingHorizontal: 4,
   },
   text: {
