@@ -13,6 +13,8 @@ import { FlightRow } from './FlightRow';
 import { FlightBoardHeader } from './FlightBoardHeader';
 import { flightDataService } from '../services/FlightDataService';
 import { defaultConfig } from '../config/appConfig';
+import { ColumnConfig } from '../types/ColumnConfig';
+import { columnPreferencesService } from '../services/ColumnPreferencesService';
 
 interface FlightMonitorBoardProps {
   theme: Theme;
@@ -29,6 +31,9 @@ export const FlightMonitorBoard: React.FC<FlightMonitorBoardProps> = ({
 }) => {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
+  const [columns, setColumns] = useState<ColumnConfig[]>(() => 
+    columnPreferencesService.loadColumns()
+  );
   const fadeAnims = useRef<Map<string, Animated.Value>>(new Map());
 
   // Initialize flight data
@@ -80,6 +85,11 @@ export const FlightMonitorBoard: React.FC<FlightMonitorBoardProps> = ({
     setViewMode(prev => prev === 'arrivals' ? 'departures' : 'arrivals');
   };
 
+  const handleColumnsChange = (newColumns: ColumnConfig[]) => {
+    setColumns(newColumns);
+    columnPreferencesService.saveColumns(newColumns);
+  };
+
   const renderFlightRow = ({ item, index }: { item: Flight; index: number }) => {
     const fadeAnim = animationsEnabled ? fadeAnims.current.get(item.id) : undefined;
     
@@ -90,6 +100,7 @@ export const FlightMonitorBoard: React.FC<FlightMonitorBoardProps> = ({
         viewMode={viewMode}
         isEven={index % 2 === 0}
         fadeAnim={fadeAnim}
+        columns={columns}
       />
     );
   };
@@ -100,6 +111,8 @@ export const FlightMonitorBoard: React.FC<FlightMonitorBoardProps> = ({
         theme={theme}
         viewMode={viewMode}
         onToggleView={toggleViewMode}
+        columns={columns}
+        onColumnsChange={handleColumnsChange}
       />
       
       <FlatList
