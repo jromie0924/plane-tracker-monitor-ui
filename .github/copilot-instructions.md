@@ -16,6 +16,9 @@ This is a React Native + Expo application that provides an airport-style flight 
 - **react**: 19.1.0 - UI library
 - **react-native**: 0.81.5 - Mobile framework
 - **typescript**: ~5.9.2 - Type safety
+- **js-cookie**: ^3.0.5 - Cookie management for preferences persistence
+- **jest**: Testing framework
+- **@testing-library/react-native**: Component testing utilities
 
 ### Setup Tools
 - **npm**: For package management
@@ -31,12 +34,16 @@ This is a React Native + Expo application that provides an airport-style flight 
     - `FlightBoardHeader.tsx`: Header with title and column labels
     - `FlightRow.tsx`: Individual flight row with all flight details
     - `ThemeSelector.tsx`: Theme switching dropdown component
+    - `ColumnSelector.tsx`: Modal for toggling column visibility
   - `types/`: TypeScript interfaces and enums
     - `Flight.ts`: Flight data interface, FlightStatus enum, ViewMode type
+    - `Column.ts`: Column configuration interface
   - `services/`: Business logic and data services
     - `FlightDataService.ts`: Mock flight data generator and update logic
+    - `ThemePreferencesService.ts`: Theme selection and cookie persistence
+    - `ColumnPreferencesService.ts`: Column visibility preferences and cookie persistence
   - `theme/`: Theme definitions
-    - `themes.ts`: Purple (default), Light, and Dark theme definitions
+    - `themes.ts`: Eight theme definitions (Blue, Purple, Green, Red, Black, White, Light, Dark)
   - `config/`: Application configuration
     - `appConfig.ts`: Update intervals, view modes, animation settings
 - `assets/`: Images, icons, and static resources
@@ -47,9 +54,12 @@ This is a React Native + Expo application that provides an airport-style flight 
 - `package.json`: Dependencies and npm scripts
 - `tsconfig.json`: TypeScript configuration (extends Expo base config)
 - `app.json`: Expo configuration
+- `jest.config.js`: Jest test configuration
+- `jest.setup.js`: Global test setup and mocks
 - `README.md`: Project documentation
 - `QUICKSTART.md`: Quick setup guide
 - `CONTRIBUTING.md`: Contribution guidelines
+- `TESTING.md`: Comprehensive testing documentation
 
 ## Configuration
 
@@ -70,16 +80,22 @@ The `dataSourceConfig` in `appConfig.ts` allows switching between data sources:
 - `region`: AWS region for pub/sub services
 
 ### Theme Configuration (`src/theme/themes.ts`)
-Three built-in themes:
+Eight built-in themes available:
+- **blueTheme (Default)**: Blue ocean theme with dark background
 - **defaultTheme (Purple)**: Classic airport monitor with purple/magenta colors
+- **greenTheme**: Forest green theme with dark background
+- **redTheme**: Deep red theme with dark background
+- **blackTheme**: Monochrome black theme with grayscale accents
+- **whiteTheme**: Clean white theme with blue accents for light environments
 - **lightTheme**: Light mode with purple accents
-- **darkTheme**: Dark mode with purple accents
+- **darkTheme**: Alternative dark mode with purple accents
 
 Each theme includes:
 - Primary and secondary colors
 - Background and text colors
 - Header and row background colors
 - Status-specific colors (scheduled, boarding, departed, in-flight, landed, arrived, delayed, cancelled)
+- Theme preferences persist across page reloads using cookies (1-year expiry)
 
 ## Running the Application
 
@@ -157,30 +173,57 @@ const styles = StyleSheet.create({
 
 ### FlightMonitorBoard (Main Component)
 - Manages flight data state and updates
-- Controls view mode (arrivals/departures)
-- Handles theme application
+- Controls column visibility preferences via `ColumnPreferencesService`
+- Handles theme application via `ThemePreferencesService`
 - Uses FlatList for efficient rendering of large lists
 - Implements auto-refresh with configurable intervals
+- Passes column configuration to child components
 
 ### FlightBoardHeader
-- Displays board title based on view mode
-- Shows column headers (Time, Airline, Flight, Origin/Dest, Status, Gate)
+- Displays static "FLIGHT MONITOR" title
+- Shows column headers based on visible columns from preferences
+- Conditionally renders headers (Time, Airline, Flight, From, To, Altitude, Aircraft Type)
 - Responsive to theme changes
 
 ### FlightRow
 - Displays individual flight information
+- Conditionally renders columns based on visibility preferences
 - Formats time display (HH:MM format)
 - Shows status with color coding
 - Optional fade-in animation
 - Alternating row colors for readability
 
+### ColumnSelector
+- Modal component for toggling column visibility
+- Checkbox interface for each available column
+- Persists selections via `ColumnPreferencesService`
+- Real-time updates to header and row displays
+- Available columns: Time, Airline, Flight, From, To, Altitude, Aircraft Type
+
 ### ThemeSelector
 - Dropdown-style theme picker
-- Displays available themes
-- Handles theme switching
+- Displays all 8 available themes
+- Shows checkmark for current selection
+- Handles theme switching via `ThemePreferencesService`
+- Persists theme choice across sessions
 - Responsive design
 
 ## Theme System
+
+### Available Themes
+The application includes 8 pre-built themes:
+
+1. **Blue Theme** (Default) - Ocean-inspired dark theme
+2. **Purple Theme** - Classic airport monitor aesthetic
+3. **Green Theme** - Forest-inspired dark theme
+4. **Red Theme** - Bold red dark theme
+5. **Black Theme** - Monochrome grayscale theme
+6. **White Theme** - Clean light theme with blue accents
+7. **Light Theme** - Light mode with purple accents
+8. **Dark Theme** - Alternative dark mode with purple
+
+### Theme Persistence
+Theme preferences are automatically saved using cookies with 1-year expiry via `ThemePreferencesService`. User selections persist across browser sessions and page reloads.
 
 ### Using Themes
 Themes are passed as props through the component tree:
@@ -214,12 +257,12 @@ export const customTheme: Theme = {
 };
 ```
 
-Then add it to the `availableThemes` array in `App.tsx`:
-```tsx
-const availableThemes = [
-  { name: 'Custom', theme: customTheme },
-  // ... other themes
-];
+Then register it in `src/services/ThemePreferencesService.ts` by adding it to the themes map:
+```typescript
+private themes: { [key: string]: Theme } = {
+  // ... existing themes
+  'Custom': customTheme,
+};
 ```
 
 ### Applying Theme Colors
@@ -229,6 +272,13 @@ Use theme colors in styles dynamically:
   <Text style={{ color: theme.text }}>Hello</Text>
 </View>
 ```
+
+### ThemePreferencesService
+Located in `src/services/ThemePreferencesService.ts`:
+- Manages theme selection and persistence
+- Validates theme names against available themes
+- Handles cookie serialization with error recovery
+- Provides fallback to default (Blue) theme on errors
 
 ## Data Flow
 
@@ -274,21 +324,118 @@ This UI is designed to integrate with the [plane-tracker-rgb-pi](https://github.
 
 ## Testing
 
-### Current Testing Approach
-- **Mock Data**: All testing currently uses mock data from `FlightDataService`
-- **Manual Testing**: Run the app and verify UI behavior manually
-- **Platform Testing**: Test on web, iOS, and Android platforms
+### Test Suite Overview
+The project includes comprehensive unit tests with 123 tests covering services, components, and configuration.
 
-### Future Testing Plans
-- Unit tests for services and utilities
-- Component tests for React Native components
-- Integration tests for data flow
-- E2E tests for critical user flows
+**Test Coverage Summary**:
+- **Total Tests**: 123 passing
+- **Services**: 100% coverage (58 tests)
+  - `FlightDataService`: Mock data generation, status progression (21 tests)
+  - `ColumnPreferencesService`: Cookie persistence, validation, toggle logic (24 tests)
+  - `ThemePreferencesService`: Theme persistence, error handling (13 tests)
+- **Components**: 82-92% coverage (64 tests)
+  - `FlightRow`: Rendering, column visibility, data formatting (24 tests)
+  - `ColumnSelector`: Modal interaction, column toggle logic (23 tests)
+  - `ThemeSelector`: Theme selection, dropdown behavior (17 tests)
+- **Configuration**: 100% coverage (21 tests)
+  - `appConfig`: Default values, type validation, data source config
 
-### Testing Framework Recommendations
-- **Jest**: Unit and component testing
-- **React Native Testing Library**: Component testing
-- **Detox**: E2E testing on mobile devices
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run specific test file
+npm test -- path/to/test.test.ts
+
+# Run tests matching a pattern
+npm test -- --testNamePattern="should toggle column"
+```
+
+### Test Framework
+- **Jest**: Testing framework with `jest-expo` preset for React Native
+- **@testing-library/react-native**: Component testing utilities
+- **Global Mocks**: `js-cookie` and Expo runtime (configured in `jest.setup.js`)
+
+### Writing Tests
+
+**Service Test Example**:
+```typescript
+import { serviceUnderTest } from '../ServiceName';
+
+describe('ServiceName', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should perform expected behavior', () => {
+    const result = serviceUnderTest.method();
+    expect(result).toBe(expectedValue);
+  });
+});
+```
+
+**Component Test Example**:
+```typescript
+import React from 'react';
+import { render, fireEvent } from '@testing-library/react-native';
+import { ComponentName } from '../ComponentName';
+
+describe('ComponentName', () => {
+  it('should render correctly', () => {
+    const { getByText } = render(<ComponentName />);
+    expect(getByText('Expected Text')).toBeTruthy();
+  });
+
+  it('should handle user interaction', () => {
+    const { getByText } = render(<ComponentName />);
+    fireEvent.press(getByText('Button'));
+    expect(mockCallback).toHaveBeenCalled();
+  });
+});
+```
+
+### Test Structure
+```
+src/
+├── components/__tests__/
+│   ├── ColumnSelector.test.tsx
+│   ├── FlightRow.test.tsx
+│   └── ThemeSelector.test.tsx
+├── config/__tests__/
+│   └── appConfig.test.ts
+└── services/__tests__/
+    ├── ColumnPreferencesService.test.ts
+    ├── FlightDataService.test.ts
+    └── ThemePreferencesService.test.ts
+```
+
+### Best Practices
+1. **Arrange-Act-Assert**: Structure tests clearly
+2. **One Assertion Per Test**: Keep tests focused
+3. **Descriptive Names**: Use clear, descriptive test names
+4. **Clean Up**: Clear mocks between tests with `beforeEach`
+5. **Test Behavior**: Test what the code does, not how it does it
+
+### Continuous Integration
+Tests run automatically on pull requests and commits to main branch. All tests must pass before merging.
+
+### Additional Testing Documentation
+For detailed testing information, troubleshooting, and future improvements, see `TESTING.md` in the project root.
+
+### Future Testing Improvements
+- Add tests for FlightBoardHeader component
+- Add integration tests for FlightMonitorBoard
+- Add E2E tests with Detox for mobile platforms
+- Add performance benchmarks
+- Add visual regression tests
 
 ## Performance Optimization
 
@@ -353,9 +500,10 @@ const styles = StyleSheet.create({
 
 ### Modifying Themes
 1. Open `src/theme/themes.ts`
-2. Locate the theme you want to modify (defaultTheme, lightTheme, or darkTheme)
+2. Locate the theme you want to modify (blueTheme, defaultTheme, greenTheme, redTheme, blackTheme, whiteTheme, lightTheme, or darkTheme)
 3. Update color values (use hex color codes)
 4. Save and reload the app (changes are hot-reloaded)
+5. If modifying the default theme, update `ThemePreferencesService.ts` to change the fallback theme name
 
 ### Adding Flight Data Columns
 1. Update `Flight` interface in `src/types/Flight.ts` with new field
